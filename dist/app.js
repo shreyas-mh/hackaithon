@@ -1281,7 +1281,7 @@ function renderMessages() {
   const messages = (data.messages ?? []).filter(item => item.from === accountId || item.to === accountId)
     .slice().reverse().map(item => ({ ...item, outgoing: item.from === accountId,
       person: profile(item.from === accountId ? item.to : item.from).name }));
-  main.innerHTML = intro("Messages", "Choose an opportunity and a volunteering message to send.") +
+  main.innerHTML = intro("Messages", "Start a new message or reply directly to a conversation.") +
     '<div id="messages-panel"></div>';
   mountFeature("messages-panel", "Messages", {
     ...messageProps(), messages,

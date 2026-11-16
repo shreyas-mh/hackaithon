@@ -45,6 +45,8 @@
   function Messages({ recipients, events, topics, messages, onSend }) {
     const [person, setPerson] = useState("");
     const [opportunity, setOpportunity] = useState("");
+    const [replyId, setReplyId] = useState("");
+    const [replyError, setReplyError] = useState("");
     const organizer = events.find(item => item.id === opportunity)?.adminId;
     const availableRecipients = recipients.filter(item => !item.admin || item.id === organizer);
     const [error, setError] = useState("");
@@ -78,7 +80,27 @@
             h("h3", null, `${item.outgoing ? "To" : "From"} ${item.person}`),
             h("p", { className: "muted" }, `${item.opportunity} · ${item.schedule}`),
             h("p", { className: "note" }, item.text),
-            h("p", { className: "muted" }, new Date(item.at).toLocaleString())),
+            h("p", { className: "muted" }, new Date(item.at).toLocaleString()),
+            button(replyId === item.id ? "Cancel reply" : "Reply", {
+              className: "button secondary message-reply-button",
+              "aria-expanded": replyId === item.id,
+              onClick() {
+                setReplyId(replyId === item.id ? "" : item.id);
+                setReplyError("");
+              }
+            }),
+            replyId === item.id && h("form", { className: "message-reply", onSubmit(event) {
+              event.preventDefault();
+              const topic = new FormData(event.currentTarget).get("topic");
+              const recipient = item.outgoing ? item.to : item.from;
+              try { onSend(recipient, item.eventId, topic); }
+              catch (failure) { setReplyError(failure.message); }
+            } },
+              h("label", null, `Reply to ${item.person} about ${item.opportunity}`,
+                h("select", { name: "topic", required: true },
+                  option("", "Choose a volunteering message"), topics.map(([id, label]) => option(id, label)))),
+              errorText(replyError),
+              button("Send reply", { type: "submit", className: "button" }))),
           h("span", { className: "tag" }, item.topic === "invite" ? "Invitation" : item.outgoing ? "Sent" : "Received")))
           : h("div", { className: "empty" }, "No messages yet.")));
   }
