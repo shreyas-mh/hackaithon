@@ -2,43 +2,29 @@
 
 A hackathon demo that helps students find age-appropriate volunteer opportunities and gives organizers a way to review requests and confirm spots.
 
-## Setup
+## Run Locally
 
-1. Keep the entire `dist/` folder together, including `vendor/`, the JavaScript and CSS files, and the image.
-2. Open a terminal in the project folder. Run `python3 --version` to check that Python 3 is available for the local server.
-3. Use a modern browser such as Chrome. React is bundled in `dist/vendor/`, so the demo has no package installation or build step.
-
-## Start the app on your computer
-
-From the project folder, run:
-
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
-```
-
-Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Choose a demo account and enter the passcode `demo`. Try Alex Rivera for the volunteer walkthrough and Jordan Morgan for approving the garden request. Press **Control+C** in the terminal to stop the server.
-
-For a quick offline demo, open `dist/index.html` directly in Chrome. Use the HTTP server if file mode has trouble with browser storage. Live ZIP and address lookup requires an internet connection.
-
-## Host on the same Wi-Fi network
-
-1. Connect the host computer and phone to the same Wi-Fi network.
-2. Run this command from the project folder on the host:
+1. Install [Python 3](https://www.python.org/downloads/) and have a web browser available. Download or clone the repository and open a terminal in the project folder (the folder containing `dist/`).
+2. Start the Python web server.
 
    ```sh
-   python3 -m http.server 8000 --bind 0.0.0.0 --directory dist
+   python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
    ```
 
-3. On a Mac, find the host’s IP address under **System Settings → Wi-Fi → Details → TCP/IP**.
-4. In the phone browser, open `http://<host-ip>:8000/`, substituting the host’s IP address. Press **Control+C** on the host when the demo is over.
+   On Windows, replace `python3` with `py -3` if needed.
+3. Open [http://localhost:8000/](http://localhost:8000/), choose a demo account, and enter the passcode `demo`. Press **Ctrl+C** in the terminal to stop the server.
 
-Use the same phone browser for both roles so approvals and messages from one demo account are visible to the other.
+The app includes all JavaScript dependencies. Python serves the files directly, with no packages to install and no build step. Live ZIP and address lookup require internet access.
 
-## Host a shareable demo
+## Host on GitHub Pages
 
-1. Create a static website on your hosting provider.
-2. Publish the **contents** of `dist/` at the site root. If the provider deploys from a project or repository folder, set its publish directory to `dist` and leave the build command blank.
-3. Open the hosted HTTPS URL. Sign in as Alex Rivera, then sign out and sign in as Jordan Morgan to test the two roles in the same browser.
+GitHub Pages can serve the static app directly. GitHub Wiki is for project documentation.
+
+1. In the GitHub repository, open **Settings → Pages**.
+2. Under **Build and deployment**, choose **Deploy from a branch**, select **main** and **/(root)**, then click **Save**.
+3. After deployment, open the `dist/` path under the Pages URL. For this repository, the default app URL is [https://shreyas-mh.github.io/hackaithon/dist/](https://shreyas-mh.github.io/hackaithon/dist/).
+
+The app uses relative asset paths, so it works under `/hackaithon/dist/`. GitHub Pages availability depends on the repository visibility and account plan. See [GitHub’s publishing source guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
 The hosted site serves the same demo files. Each browser and site URL has its own local data, so your localhost demo data and another person’s requests, messages, and attendance records stay separate. The public passcode selects a fictional account for the demo. Use sample data when sharing the site.
 
