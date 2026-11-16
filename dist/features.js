@@ -42,79 +42,93 @@
       button(`Save attendance (${selected.length})`, { type: "submit", className: "button", disabled: !selected.length })));
   }
 
-  function Messages({ recipients, events, topics, messages, onSend }) {
-    const [person, setPerson] = useState("");
+  function MessageField({ messageLimit, defaultValue }) {
+    return h("label", null, "Message",
+      h("textarea", { name: "text", rows: 3, required: true, maxLength: messageLimit, defaultValue,
+        placeholder: "Write about this volunteer opportunity…" }));
+  }
+
+  function Messages({ recipients, events, messageLimit, messages, onSend }) {
     const [opportunity, setOpportunity] = useState("");
-    const [replyId, setReplyId] = useState("");
+    const [history, setHistory] = useState(messages);
+    const [openThread, setOpenThread] = useState("");
+    const [error, setError] = useState("");
     const [replyError, setReplyError] = useState("");
     const organizer = events.find(item => item.id === opportunity)?.adminId;
     const availableRecipients = recipients.filter(item => !item.admin || item.id === organizer);
-    const [error, setError] = useState("");
-    const history = messages.filter(item => !person || item.from === person || item.to === person);
+    const threads = new Map();
+    for (const item of history) {
+      const recipient = item.outgoing ? item.to : item.from;
+      const key = JSON.stringify([item.eventId, recipient]);
+      if (!threads.has(key)) threads.set(key, { key, recipient, latest: item, messages: [] });
+      threads.get(key).messages.push(item);
+    }
+    const submit = (event, to, eventId, reportError) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      try {
+        const fields = new FormData(form);
+        const recipient = to ?? fields.get("to");
+        setHistory(onSend(recipient, eventId, fields.get("text")));
+        setOpenThread(JSON.stringify([eventId, recipient]));
+        setReplyError("");
+        reportError("");
+        form.reset();
+      } catch (failure) {
+        reportError(failure.message);
+      }
+    };
+
     return h("div", { className: "message-layout" },
       h("section", { className: "panel", "aria-labelledby": "compose-title" },
         h("h2", { id: "compose-title" }, "New Message"),
-        h("form", { onSubmit(event) {
-          event.preventDefault();
-          const fields = new FormData(event.currentTarget);
-          try { onSend(fields.get("to"), fields.get("opportunity"), fields.get("topic")); }
-          catch (failure) { setError(failure.message); }
-        } },
-        h("label", null, "Opportunity", h("select", { name: "opportunity", required: true, value: opportunity,
-          onChange: event => setOpportunity(event.target.value) },
-          option("", "Choose an opportunity"), events.map(item => option(item.id, item.title)))),
-        h("label", null, "To", h("select", { name: "to", required: true, key: opportunity },
-          option("", "Choose a recipient"), availableRecipients.map(item => option(item.id, item.name)))),
-        h("label", null, "Message", h("select", { name: "topic", required: true },
-          option("", "Choose a volunteering message"), topics.map(([id, label]) => option(id, label)))),
-        errorText(error),
-        button("Send message", { type: "submit", className: "button", disabled: !events.length || !recipients.length }))),
-      h("section", { className: "stack", "aria-labelledby": "history-title" },
+        h("form", { onSubmit: event => submit(event, null, opportunity, setError) },
+          h("label", null, "Opportunity", h("select", { required: true, value: opportunity,
+            onChange: event => { setOpportunity(event.target.value); setError(""); } },
+            option("", "Choose an opportunity"), events.map(item => option(item.id, item.title)))),
+          h("label", null, "To", h("select", { name: "to", required: true, key: opportunity, disabled: !opportunity },
+            option("", "Choose a recipient"), availableRecipients.map(item => option(item.id, item.name)))),
+          h(MessageField, { messageLimit }),
+          errorText(error),
+          button("Send message", { type: "submit", className: "button", disabled: !opportunity || !availableRecipients.length }))),
+      h("section", { className: "stack message-threads", "aria-labelledby": "history-title" },
         h("h2", { id: "history-title" }, "Conversations"),
-        h("label", { className: "message-filter" }, "Filter by person", h("select", { value: person,
-          onChange: event => setPerson(event.target.value) }, option("", "Everyone"),
-        Array.from(new Map(messages.map(item => [item.outgoing ? item.to : item.from, item.person])),
-          ([id, name]) => option(id, name)))),
-        history.length ? history.map(item => h("article", { key: item.id, className: "record" },
-          h("div", { className: "record-copy" },
-            h("h3", null, `${item.outgoing ? "To" : "From"} ${item.person}`),
-            h("p", { className: "muted" }, `${item.opportunity} · ${item.schedule}`),
-            h("p", { className: "note" }, item.text),
-            h("p", { className: "muted" }, new Date(item.at).toLocaleString()),
-            button(replyId === item.id ? "Cancel reply" : "Reply", {
-              className: "button secondary message-reply-button",
-              "aria-expanded": replyId === item.id,
-              onClick() {
-                setReplyId(replyId === item.id ? "" : item.id);
-                setReplyError("");
-              }
+        threads.size ? Array.from(threads.values(), thread => {
+          const { key, recipient, latest } = thread;
+          const expanded = openThread === key;
+          return h("article", { key, className: "record message-thread" },
+            h("h3", null, latest.opportunity),
+            h("p", { className: "muted" }, latest.schedule),
+            h("p", null, `Conversation with ${latest.person}`),
+            !expanded && h("p", { className: "message-preview" }, `${latest.outgoing ? "You" : latest.person}: ${latest.text}`),
+            button(expanded ? "Close conversation" : "Open conversation", {
+              "aria-expanded": expanded,
+              onClick() { setOpenThread(expanded ? "" : key); setReplyError(""); }
             }),
-            replyId === item.id && h("form", { className: "message-reply", onSubmit(event) {
-              event.preventDefault();
-              const topic = new FormData(event.currentTarget).get("topic");
-              const recipient = item.outgoing ? item.to : item.from;
-              try { onSend(recipient, item.eventId, topic); }
-              catch (failure) { setReplyError(failure.message); }
-            } },
-              h("label", null, `Reply to ${item.person} about ${item.opportunity}`,
-                h("select", { name: "topic", required: true },
-                  option("", "Choose a volunteering message"), topics.map(([id, label]) => option(id, label)))),
+            expanded && h("ol", { className: "message-history", "aria-label": "Message history" },
+              thread.messages.slice().reverse().map(item => h("li", { key: item.id },
+                h("p", { className: "muted" }, `${item.outgoing ? "You" : item.person} · ${new Date(item.at).toLocaleString()}`),
+                item.topic === "invite" && h("span", { className: "tag" }, "Invitation"),
+                h("p", { className: "message-text" }, item.text)))),
+            expanded && h("form", { onSubmit: event => submit(event, recipient, latest.eventId, setReplyError) },
+              h(MessageField, { messageLimit }),
               errorText(replyError),
-              button("Send reply", { type: "submit", className: "button" }))),
-          h("span", { className: "tag" }, item.topic === "invite" ? "Invitation" : item.outgoing ? "Sent" : "Received")))
-          : h("div", { className: "empty" }, "No messages yet.")));
+              button("Send reply", { type: "submit", className: "button" })));
+        }) : h("div", { className: "empty" }, "No conversations yet.")));
   }
 
-  function Invite({ recipients, onSend, onExternalShare }) {
+  function Invite({ recipients, messageLimit, invitationText, onSend, onExternalShare }) {
     const [error, setError] = useState("");
     return h("form", { onSubmit(event) {
       event.preventDefault();
-      try { onSend(new FormData(event.currentTarget).get("to")); }
+      const fields = new FormData(event.currentTarget);
+      try { onSend(fields.get("to"), fields.get("text")); }
       catch (failure) { setError(failure.message); }
     } },
     recipients.length ? h("label", null, "Send an in-app invitation", h("select", { name: "to", required: true },
       option("", "Choose an accepted friend"), recipients.map(item => option(item.id, item.name))))
       : h("p", { className: "muted" }, "In-app invitations are available for accepted friends who allow messages."),
+    recipients.length > 0 && h(MessageField, { messageLimit, defaultValue: invitationText }),
     errorText(error),
     h("div", { className: "actions" }, button("Share outside the app", { onClick: onExternalShare }),
       recipients.length > 0 && button("Send invitation", { type: "submit", className: "button" })));

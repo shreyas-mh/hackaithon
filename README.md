@@ -57,7 +57,7 @@ Sign in as Jordan Morgan for **Riverside Trail Cleanup** with three approved vol
 
 Under **Settings → Privacy**, volunteers can disable new friend requests, disable messages and invites from friends, hide their account from friend search, or stop sharing upcoming approved events.
 
-**Messages** supports volunteer-to-admin and accepted-friend conversations. Admins can message demo volunteer accounts. Each message uses a preset volunteering topic and is tied to an opportunity. Use **Invite a Friend** on a card to send an in-app invitation. Conversations and settings are stored in the current browser, so switch demo accounts in the same browser to see both sides.
+**Messages** supports volunteer-to-admin and accepted-friend conversations. Admins can message demo volunteer accounts. Choose an opportunity and recipient to start a conversation, then open it to read and reply with your own words. Each conversation stays with that opportunity and person. Keep messages about volunteering, such as check-in, supplies, or service hours. The demo checks for a few common spam and off-platform requests. Use **Invite a Friend** on a card to write an in-app invitation. Conversations and settings are stored in the current browser, so switch demo accounts in the same browser to see both sides.
 
 In **Discover**, open **Find Public Volunteer Opportunities** and enter a U.S. ZIP code or address. Esri resolves the query and the app ranks the included Bay Area programs within 15 straight-line miles. Organizer links lead to the published listings and signup details. Try ZIP **95112** or **94129**.
 

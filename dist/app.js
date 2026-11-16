@@ -1225,19 +1225,8 @@ function saveBulkAttendance(eventId, ids, attendance) {
   showMessage(`Attendance saved for ${selected.size} ${selected.size === 1 ? "volunteer" : "volunteers"}.`);
 }
 
-const messageTopics = {
-  schedule: "Could you confirm the start time and schedule?",
-  meeting: "Where should we meet or check in?",
-  supplies: "What should volunteers bring?",
-  accessibility: "Are there accessibility accommodations for this opportunity?",
-  eligibility: "Could you confirm the age or eligibility requirements?",
-  attendance: "Could you help me with attendance or volunteer hours?",
-  listing: "Please check the opportunity listing for the latest schedule and instructions.",
-  contact: "Please speak to the organizer at check-in for help with this question.",
-  confirm: "I’m planning to attend this shift.",
-  thank: "Thank you for helping with this opportunity!",
-  invite: "Would you like to volunteer with me?"
-};
+const messageLimit = 600;
+const invitationText = "Would you like to volunteer with me?";
 
 function canMessage(to) {
   if (!Object.hasOwn(demoAccounts, to) || to === accountId) return false;
@@ -1246,12 +1235,12 @@ function canMessage(to) {
   return connection(to)?.status === "accepted" && profile(to).acceptFriendMessages;
 }
 
-function sendOpportunityMessage(to, eventId, topic) {
+function sendOpportunityMessage(to, eventId, draft, topic = "message") {
   data = readData();
   const event = eventById(eventId);
   if (!role || !canMessage(to)) throw new Error("This account is not accepting messages from you.");
-  if (!event || event.deletedAt || (role === "volunteer" && !withinDistance(event)) || !Object.hasOwn(messageTopics, topic)) {
-    throw new Error("Select an available opportunity and a volunteer coordination topic.");
+  if (!event || event.deletedAt || (role === "volunteer" && !withinDistance(event))) {
+    throw new Error("This opportunity is no longer available for messaging.");
   }
   if (role === "admin" ? !canManage(event) : isAdminAccount(to) && to !== eventOwner(event)) {
     throw new Error("Choose the admin responsible for this opportunity.");
@@ -1259,8 +1248,15 @@ function sendOpportunityMessage(to, eventId, topic) {
   if (topic === "invite" && (role !== "volunteer" || isAdminAccount(to) || hasStarted(event) || !withinDistance(event))) {
     throw new Error("Invites are for accepted friends and upcoming local opportunities.");
   }
+  const text = draft?.trim() ?? "";
+  if (!text || text.length > messageLimit) {
+    throw new Error(`Write a message between 1 and ${messageLimit} characters.`);
+  }
+  if (/\b(?:send (?:me )?(?:your )?(?:password|verification code)|buy now|click here to claim|(?:add|follow|dm) me on (?:snapchat|instagram|tiktok))\b/i.test(text)) {
+    throw new Error("Keep your message about this opportunity and communicate here in the app.");
+  }
   const message = {
-    id: newId(), from: accountId, to, eventId, topic, text: messageTopics[topic],
+    id: newId(), from: accountId, to, eventId, topic, text,
     opportunity: event.title, schedule: `${when(event)} · ${event.location}`, at: Date.now()
   };
   save(notify({ ...data, messages: [...(data.messages ?? []), message] }, to,
@@ -1272,23 +1268,25 @@ function messageProps() {
     recipients: Object.keys(demoAccounts).filter(canMessage).map(id => ({ id, name: profile(id).name, admin: isAdminAccount(id) })),
     events: sortedEvents().filter(event => role === "admin" ? canManage(event) : withinDistance(event))
       .map(event => ({ id: event.id, title: event.title, adminId: eventOwner(event) })),
-    topics: Object.entries(messageTopics).filter(([id]) => id !== "invite"),
-    onSend: sendOpportunityMessage
+    messageLimit
   };
 }
 
-function renderMessages() {
-  const messages = (data.messages ?? []).filter(item => item.from === accountId || item.to === accountId)
+function messageHistory() {
+  return (data.messages ?? []).filter(item => item.from === accountId || item.to === accountId)
     .slice().reverse().map(item => ({ ...item, outgoing: item.from === accountId,
       person: profile(item.from === accountId ? item.to : item.from).name }));
-  main.innerHTML = intro("Messages", "Start a new message or reply directly to a conversation.") +
+}
+
+function renderMessages() {
+  main.innerHTML = intro("Messages", "Use these conversations to coordinate volunteering, ask questions, or follow up about an opportunity.") +
     '<div id="messages-panel"></div>';
   mountFeature("messages-panel", "Messages", {
-    ...messageProps(), messages,
-    onSend(to, eventId, topic) {
-      sendOpportunityMessage(to, eventId, topic);
-      render();
+    ...messageProps(), messages: messageHistory(),
+    onSend(to, eventId, text) {
+      sendOpportunityMessage(to, eventId, text);
       showMessage("Message sent.");
+      return messageHistory();
     }
   }, pageRoots);
 }
@@ -1299,10 +1297,10 @@ function inviteByMessage(eventId) {
   const props = messageProps();
   openDialog("Invite a Friend", `<p>${escape(event.title)} · ${when(event)}</p><div id="invite-message-panel"></div>`);
   mountFeature("invite-message-panel", "Invite", {
-    ...props, eventId, recipients: props.recipients.filter(item => !item.admin),
+    messageLimit, invitationText, recipients: props.recipients.filter(item => !item.admin),
     onExternalShare: () => invite(eventId),
-    onSend(to) {
-      sendOpportunityMessage(to, eventId, "invite");
+    onSend(to, text) {
+      sendOpportunityMessage(to, eventId, text, "invite");
       dialog.close();
       render();
       showMessage("Invitation sent.");

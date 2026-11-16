@@ -235,11 +235,14 @@ form input, form textarea, form select { min-width: 0; width: 100%; }
 .public-results p { margin-bottom: 0; }
 .message-layout { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 18px; align-items: start; }
 .message-layout h2 { font-size: clamp(27px, 4vw, 38px); }
-.message-filter { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
-.message-filter select { border: 1px solid var(--control-border); border-radius: 8px; padding: 7px 10px; color: var(--ink); background: var(--input); }
-.message-reply-button { margin-top: 12px; }
-.message-reply { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-.message-reply .button { justify-self: start; }
+.message-threads { min-width: 0; }
+.message-thread { display: grid; grid-template-columns: minmax(0, 1fr); }
+.message-thread .button { justify-self: start; }
+.message-thread textarea { resize: vertical; }
+.message-preview { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.message-history { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.message-history li { background: var(--tint); border-radius: 10px; padding: 10px; }
+.message-text { white-space: pre-wrap; }
 .selectable-people { max-height: 260px; overflow: auto; }
 .selectable-people .check:first-of-type { border-bottom: 1px solid var(--border); }
 @media (max-width: 630px) {
