@@ -16,18 +16,6 @@ A hackathon demo that helps students find age-appropriate volunteer opportunitie
 
 The app includes all JavaScript dependencies. Python serves the files directly, with no packages to install and no build step. Live ZIP and address lookup require internet access.
 
-## Host on GitHub Pages
-
-GitHub Pages can serve the static app directly. GitHub Wiki is for project documentation.
-
-1. In the GitHub repository, open **Settings → Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**, select **main** and **/(root)**, then click **Save**.
-3. After deployment, open the `dist/` path under the Pages URL. For this repository, the default app URL is [https://shreyas-mh.github.io/hackaithon/dist/](https://shreyas-mh.github.io/hackaithon/dist/).
-
-The app uses relative asset paths, so it works under `/hackaithon/dist/`. GitHub Pages availability depends on the repository visibility and account plan. See [GitHub’s publishing source guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
-
-The hosted site serves the same demo files. Each browser and site URL has its own local data, so your localhost demo data and another person’s requests, messages, and attendance records stay separate. The public passcode selects a fictional account for the demo. Use sample data when sharing the site.
-
 ## A two-minute walkthrough
 
 1. Sign in as **Volunteer** using the demo passcode `demo`. Alex Rivera is 15. Turn on **Eligible for my age (15)** and watch the 16+ library opportunity disappear.
