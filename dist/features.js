@@ -48,7 +48,7 @@
         placeholder: "Write about this volunteer opportunity…" }));
   }
 
-  function Messages({ recipients, events, messageLimit, messages, onSend }) {
+  function Messages({ recipients, events, messageLimit, messages, onSend, onUpdateConversation }) {
     const [opportunity, setOpportunity] = useState("");
     const [history, setHistory] = useState(messages);
     const [openThread, setOpenThread] = useState("");
@@ -96,10 +96,24 @@
         threads.size ? Array.from(threads.values(), thread => {
           const { key, recipient, latest } = thread;
           const expanded = openThread === key;
+          const updateConversation = () => {
+            const confirmation = latest.ended
+              ? "Delete this conversation from your Messages?"
+              : "End this conversation for both participants? This will disable replies.";
+            if (!window.confirm(confirmation)) return;
+            try {
+              setHistory(onUpdateConversation(recipient, latest.eventId, latest.ended));
+              setReplyError("");
+              if (latest.ended) setOpenThread("");
+            } catch (failure) {
+              setReplyError(failure.message);
+            }
+          };
           return h("article", { key, className: "record message-thread" },
             h("h3", null, latest.opportunity),
             h("p", { className: "muted" }, latest.schedule),
             h("p", null, `Conversation with ${latest.person}`),
+            latest.ended && h("span", { className: "tag" }, "Ended"),
             !expanded && h("p", { className: "message-preview" }, `${latest.outgoing ? "You" : latest.person}: ${latest.text}`),
             button(expanded ? "Close conversation" : "Open conversation", {
               "aria-expanded": expanded,
@@ -110,10 +124,15 @@
                 h("p", { className: "muted" }, `${item.outgoing ? "You" : item.person} · ${new Date(item.at).toLocaleString()}`),
                 item.topic === "invite" && h("span", { className: "tag" }, "Invitation"),
                 h("p", { className: "message-text" }, item.text)))),
-            expanded && h("form", { onSubmit: event => submit(event, recipient, latest.eventId, setReplyError) },
-              h(MessageField, { messageLimit }),
+            expanded && h(React.Fragment, null,
+              !latest.ended && h("form", { onSubmit: event => submit(event, recipient, latest.eventId, setReplyError) },
+                h(MessageField, { messageLimit }),
+                button("Send reply", { type: "submit", className: "button" })),
               errorText(replyError),
-              button("Send reply", { type: "submit", className: "button" })));
+              button(latest.ended ? "Delete conversation" : "End conversation", {
+                className: latest.ended ? "button danger" : "button secondary",
+                onClick: updateConversation
+              })));
         }) : h("div", { className: "empty" }, "No conversations yet.")));
   }
 

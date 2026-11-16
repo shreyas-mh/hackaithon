@@ -1227,6 +1227,7 @@ function saveBulkAttendance(eventId, ids, attendance) {
 
 const messageLimit = 600;
 const invitationText = "Would you like to volunteer with me?";
+const conversationKey = (eventId, first, second) => JSON.stringify([eventId, ...[first, second].sort()]);
 
 function canMessage(to) {
   if (!Object.hasOwn(demoAccounts, to) || to === accountId) return false;
@@ -1239,6 +1240,9 @@ function sendOpportunityMessage(to, eventId, draft, topic = "message") {
   data = readData();
   const event = eventById(eventId);
   if (!role || !canMessage(to)) throw new Error("This account is not accepting messages from you.");
+  if (data.closedConversations?.[conversationKey(eventId, accountId, to)]) {
+    throw new Error("This conversation has ended.");
+  }
   if (!event || event.deletedAt || (role === "volunteer" && !withinDistance(event))) {
     throw new Error("This opportunity is no longer available for messaging.");
   }
@@ -1273,16 +1277,41 @@ function messageProps() {
 }
 
 function messageHistory() {
-  return (data.messages ?? []).filter(item => item.from === accountId || item.to === accountId)
-    .slice().reverse().map(item => ({ ...item, outgoing: item.from === accountId,
-      person: profile(item.from === accountId ? item.to : item.from).name }));
+  return (data.messages ?? []).slice().reverse().flatMap(item => {
+    if (item.from !== accountId && item.to !== accountId) return [];
+    const closed = data.closedConversations?.[conversationKey(item.eventId, item.from, item.to)];
+    if (closed?.deletedBy.includes(accountId)) return [];
+    const outgoing = item.from === accountId;
+    return [{ ...item, outgoing, ended: Boolean(closed), person: profile(outgoing ? item.to : item.from).name }];
+  });
+}
+
+function updateConversation(to, eventId, deleting) {
+  data = readData();
+  const id = conversationKey(eventId, accountId, to);
+  const belongsToConversation = item => conversationKey(item.eventId, item.from, item.to) === id;
+  const messages = data.messages ?? [];
+  const closed = data.closedConversations?.[id];
+  if (!role || !messages.some(belongsToConversation)) {
+    throw new Error("This conversation is no longer available.");
+  }
+  if (deleting && !closed) throw new Error("End the conversation before deleting it.");
+  const deletedBy = new Set(closed?.deletedBy);
+  if (deleting) deletedBy.add(accountId);
+  save({
+    ...data,
+    closedConversations: { ...data.closedConversations, [id]: { deletedBy: [...deletedBy] } },
+    messages: deletedBy.size === 2 ? messages.filter(item => !belongsToConversation(item)) : messages
+  });
+  showMessage(deleting ? "Conversation deleted from your Messages." : "Conversation ended.");
+  return messageHistory();
 }
 
 function renderMessages() {
   main.innerHTML = intro("Messages", "Use these conversations to coordinate volunteering, ask questions, or follow up about an opportunity.") +
     '<div id="messages-panel"></div>';
   mountFeature("messages-panel", "Messages", {
-    ...messageProps(), messages: messageHistory(),
+    ...messageProps(), messages: messageHistory(), onUpdateConversation: updateConversation,
     onSend(to, eventId, text) {
       sendOpportunityMessage(to, eventId, text);
       showMessage("Message sent.");

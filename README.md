@@ -61,6 +61,8 @@ Under **Settings → Privacy**, volunteers can disable new friend requests, disa
 
 In **Discover**, open **Find Public Volunteer Opportunities** and enter a U.S. ZIP code or address. Esri resolves the query and the app ranks the included Bay Area programs within 15 straight-line miles. Organizer links lead to the published listings and signup details. Try ZIP **95112** or **94129**.
 
+Either participant can open a conversation and select **End conversation** to close it to replies. Each participant can then select **Delete conversation** to remove it from their own Messages. The browser removes the message history once both participants delete it.
+
 The bulk attendance, messaging, and public search panels use React with plain JavaScript. React 18 is bundled locally under the MIT license. Location lookup uses the internet, with approximate offline results for the ZIP codes in the included catalog.
 
 There are three demo admins. Jordan Morgan owns four sample opportunities, Priya Shah owns three, and Mateo Cruz owns three. Admins use the same demo passcode and manage their own listings, match requests, attendance, and impact. New opportunities belong to the admin who creates them.
