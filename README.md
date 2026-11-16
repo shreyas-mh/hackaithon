@@ -90,3 +90,7 @@ In **Discover**, open **Find Public Volunteer Opportunities** and enter a U.S. Z
 The bulk attendance, messaging, and public search panels use React with plain JavaScript. React 18 is bundled locally under the MIT license. Location lookup uses the internet, with approximate offline results for the ZIP codes in the included catalog.
 
 There are three demo admins. Jordan Morgan owns four sample opportunities, Priya Shah owns three, and Mateo Cruz owns three. Admins use the same demo passcode and manage their own listings, match requests, attendance, and impact. New opportunities belong to the admin who creates them.
+
+## Photo Credit
+
+The sign-in and Discover photo is [*Planting and watering* by the U.S. Forest Service, Pacific Southwest Region](https://commons.wikimedia.org/wiki/File:Planting_and_watering_(4704281189).jpg), via Wikimedia Commons. The photo is available under [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) and was resized for this app.
